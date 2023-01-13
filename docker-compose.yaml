@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  mdb:
+      build:
+        context: .
+      image: mongo
+      container_name: m_db
+      restart: always
+      ports:
+        - "27019:27017"
+      volumes:
+        - mymongo_vol:/data/db
+          
+  mapi_local:
+      depends_on:
+        - "mdb"
+      build:
+        context: .
+        dockerfile: ./Dockerfile
+      container_name: mapi2
+      restart: always
+      ports: 
+        - "8092:8091"
+      environment:
+        MONGODB_ENDPOINT: m_db:27017
+    
+
+networks:
+  default:
+    name: mongo-net
+    external: false
+
+volumes:
+  mymongo_vol: 
+    external: true

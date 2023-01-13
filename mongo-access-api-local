@@ -1,0 +1,86 @@
+#local mongo-api deployment
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mongo-api-services
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mongo-api-services
+  name: local-mongo-api-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service_id: local-mongo-api-server
+  template:
+    metadata:
+      labels:
+        service_id: local-mongo-api-server
+    spec:
+      containers:
+      - name: local-mongo-api-server-container
+        image: sushmita2811/mongo-api
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: MONGODB_ENDPOINT
+          value: yml-remote-mongodb-entrypoint.mongo-api-services:27017
+
+
+#local mongo-api service
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: yml-local-mongo-api-external-point
+  namespace: mongo-api-services
+spec:
+  type: LoadBalancer
+  selector:
+      service_id: local-mongo-api-server
+  ports:
+  - port: 30096
+    targetPort: 8091
+
+#remote mongo-db deployment
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mongo-api-services
+  name: remote-mongodb-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service_id: remote-mongodb-server
+  template:
+    metadata:
+      labels:
+        service_id: remote-mongodb-server
+    spec:
+      containers:
+      - name: remote-mongodb-server-container
+        image: docker.io/mongo
+        imagePullPolicy: IfNotPresent
+
+#remote mongodb service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yml-remote-mongodb-entrypoint
+  namespace: mongo-api-services
+spec:
+  type: NodePort
+  selector:
+      service_id: remote-mongodb-server
+  ports:
+  - nodePort: 30098
+    port: 27017
+    targetPort: 27017
