@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: yml-remote-echoserver
+spec:
+  containers:
+  - name: yml-es
+    image: k8s.gcr.io/echoserver:1.4
+
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yml-remote-echoserver-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service_id: remote-echo-server-from-yml
+  template:
+    metadata:
+      labels:
+        service_id: remote-echo-server-from-yml
+    spec:
+      containers:
+      - name: yml-echo-server
+        image: k8s.gcr.io/echoserver:1.4
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yml-remote-echoserver-entrypoint
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+      service_id: remote-echo-server-from-yml
+  ports:
+  - nodePort: 30083
+    port: 8080
+    targetPort: 8080
+

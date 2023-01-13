@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: yml-local-echoserver
+spec:
+  containers:
+  - name: yml-es
+    image: k8s.gcr.io/echoserver:1.4
+
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yml-local-echoserver-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service_id: local-echo-server-from-yml
+  template:
+    metadata:
+      labels:
+        service_id: local-echo-server-from-yml
+    spec:
+      containers:
+      - name: yml-echo-server
+        image: k8s.gcr.io/echoserver:1.4
+        env:
+        - name: REMOTE_ECHO_SERVER_ENDPOINT
+          value: $YML_ECHOSERVICE_ENTRYPOINT_PORT_8080_TCP_ADDR:8080
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yml-local-echoserver-external-point
+  namespace: default
+spec:
+  type: LoadBalancer
+  selector:
+      service_id: local-echo-server-from-yml
+  ports:
+  - port: 30093
+    targetPort: 8080
+
+
+
+#remote echo server
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: yml-remote-echoserver
+spec:
+  containers:
+  - name: yml-es
+    image: k8s.gcr.io/echoserver:1.4
+
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yml-remote-echoserver-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service_id: remote-echo-server-from-yml
+  template:
+    metadata:
+      labels:
+        service_id: remote-echo-server-from-yml
+    spec:
+      containers:
+      - name: yml-echo-server
+        image: k8s.gcr.io/echoserver:1.4
+
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yml-remote-echoserver-entrypoint
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+      service_id: remote-echo-server-from-yml
+  ports:
+  - nodePort: 30083
+    port: 8080
+    targetPort: 8080
+
+
+
