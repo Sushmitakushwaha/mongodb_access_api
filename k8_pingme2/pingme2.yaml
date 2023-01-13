@@ -1,0 +1,104 @@
+#local pingme pod
+
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   name: yml-local-pingme
+# spec:
+#   containers:
+#   - name: yml-es2
+#     image: stream2stream/pingme
+
+#local version pingme deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yml-local-pingme-deployment
+  namespace: default
+  #service_id: local-pingme-from-yml
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service_id: local-pingme-from-yml
+  template:
+    metadata:
+      labels:
+        service_id: local-pingme-from-yml
+    spec:
+      containers:
+      - name: yml-local-pingme
+        image: stream2stream/pingme
+
+#local version pingme service
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: yml-local-pingservice-external-point
+  namespace: default
+spec:
+  type: LoadBalancer
+  selector:
+      service_id: local-pingme-from-yml
+  ports:
+  - port: 30095
+    targetPort: 8080
+
+
+
+#remote pingme pod
+---
+
+# apiVersion: v1
+# kind: Pod
+# metadata:
+#   name: yml-remote-pingme
+# spec:
+#   containers:
+#   - name: yml-es3
+#     image: stream2stream/pingme
+
+
+#remote pingme deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: yml-remote-pingme-deployment
+  namespace: default
+  #service_id: remote-pingme-from-yml
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service_id: remote-pingme-from-yml
+  template:
+    metadata:
+      labels:
+        service_id: remote-pingme-from-yml
+    spec:
+      containers:
+      - name: yml-remote-pingme
+        image: stream2stream/pingme
+
+
+#remote pingme service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: yml-remote-pingservice-entrypoint
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+      service_id: remote-pingme-from-yml
+  ports:
+  - nodePort: 30086
+    port: 8080
+    targetPort: 8080
+
+
